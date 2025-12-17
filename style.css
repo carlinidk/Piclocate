@@ -1,0 +1,25 @@
+body {
+  background: #0b0b0b;
+  color: white;
+  font-family: system-ui;
+  text-align: center;
+}
+
+button, input {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+#tags {
+  margin: 20px;
+  font-size: 18px;
+}
+
+#map {
+  height: 400px;
+  width: 90%;
+  margin: auto;
+  border-radius: 12px;
+}
+
