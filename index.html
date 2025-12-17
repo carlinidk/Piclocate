@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Photo Place Finder (Free)</title>
+  <meta charset="UTF-8" />
+  <title>Photo → Place Finder (AI)</title>
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Leaflet Map -->
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet/dist/leaflet.css"
   />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Transformers.js -->
+  <script type="module" src="script.js"></script>
 </head>
 <body>
 
-<h1>📸 Upload a Photo → Find Similar Places</h1>
+<h1>📸 Upload a Photo</h1>
+<p>AI detects ambience & finds similar places</p>
 
 <input type="file" id="imageInput" accept="image/*">
-<button onclick="analyze()">Analyze</button>
+<button id="analyzeBtn">Analyze</button>
 
+<div id="status"></div>
 <div id="tags"></div>
 <div id="map"></div>
 
-<script src="script.js"></script>
 </body>
 </html>
