@@ -1,10 +1,12 @@
-import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.8.0";
+import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.8.0";
 
-// Ambience / aesthetic labels
+// ✅ Force WASM for mobile stability
+env.backends.webgpu.enabled = false;
+
 const LABELS = [
   "beach",
   "mountains",
-  "forest nature",
+  "forest",
   "city skyline",
   "urban nightlife",
   "aesthetic cafe",
@@ -15,65 +17,78 @@ const LABELS = [
 ];
 
 const statusEl = document.getElementById("status");
-const tagsEl = document.getElementById("tags");
+const preview = document.getElementById("preview");
+const resultsEl = document.getElementById("results");
+const galleryEl = document.getElementById("gallery");
 const analyzeBtn = document.getElementById("analyzeBtn");
 
 let classifier;
 
-// Load model once
 async function loadModel() {
-  statusEl.textContent = "Loading AI model (first time may take ~30s)...";
+  statusEl.textContent = "⏳ Loading AI model (first time ~30s)...";
   classifier = await pipeline(
     "zero-shot-image-classification",
     "Xenova/clip-vit-base-patch32"
   );
-  statusEl.textContent = "AI model ready ✅";
+  statusEl.textContent = "✅ AI model ready";
 }
 
 loadModel();
 
 analyzeBtn.onclick = async () => {
   const file = document.getElementById("imageInput").files[0];
-  if (!file) {
-    alert("Upload an image");
-    return;
+  if (!file) return alert("Upload an image");
+
+  // Preview image
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+
+  statusEl.textContent = "🔍 Analyzing image...";
+  resultsEl.innerHTML = "";
+  galleryEl.innerHTML = "";
+
+  try {
+    const results = await classifier(file, LABELS);
+    const top = results.slice(0, 3);
+
+    // Show AI results
+    resultsEl.innerHTML =
+      "<h3>Detected Ambience</h3>" +
+      top.map(r =>
+        `🌍 ${r.label} – ${(r.score * 100).toFixed(1)}%`
+      ).join("<br>");
+
+    // Show similar place images
+    loadGallery(top[0].label);
+
+    // Map
+    searchLocation(top[0].label);
+
+    statusEl.textContent = "✅ Done";
+  } catch (e) {
+    statusEl.textContent = "❌ AI failed on this device";
+    console.error(e);
   }
-
-  statusEl.textContent = "Analyzing image...";
-  tagsEl.innerHTML = "";
-
-  // Run CLIP zero-shot classification
-  const results = await classifier(file, LABELS);
-
-  // Take top 3
-  const top = results.slice(0, 3);
-
-  tagsEl.innerHTML =
-    "<h3>Detected Ambience</h3>" +
-    top.map(r =>
-      `🌍 ${r.label} (${(r.score * 100).toFixed(1)}%)`
-    ).join("<br>");
-
-  // Use strongest label to search place
-  searchLocation(top[0].label);
 };
 
-async function searchLocation(query) {
-  statusEl.textContent = "Finding similar places...";
+function loadGallery(query) {
+  // Unsplash source (no key required)
+  for (let i = 0; i < 6; i++) {
+    const img = document.createElement("img");
+    img.src = `https://source.unsplash.com/400x400/?${query}&sig=${i}`;
+    galleryEl.appendChild(img);
+  }
+}
 
+async function searchLocation(query) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
   );
 
   const data = await res.json();
-  if (!data.length) {
-    statusEl.textContent = "No matching locations found";
-    return;
-  }
+  if (!data.length) return;
 
-  const place = data[0];
-  showMap(place.lat, place.lon, place.display_name);
-  statusEl.textContent = "Done ✅";
+  showMap(data[0].lat, data[0].lon, data[0].display_name);
 }
 
 function showMap(lat, lon, name) {
@@ -82,7 +97,7 @@ function showMap(lat, lon, name) {
   const map = L.map("map").setView([lat, lon], 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors"
+    attribution: "© OpenStreetMap"
   }).addTo(map);
 
   L.marker([lat, lon])
@@ -90,3 +105,4 @@ function showMap(lat, lon, name) {
     .bindPopup(name)
     .openPopup();
 }
+
