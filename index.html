@@ -2,18 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Photo → Place Finder (AI)</title>
+  <title>Piclocate – Photo to Place</title>
 
   <link rel="stylesheet" href="style.css">
 
   <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- Transformers.js -->
+  <!-- Transformers -->
   <script type="module" src="script.js"></script>
 </head>
 <body>
@@ -25,8 +22,19 @@
 <button id="analyzeBtn">Analyze</button>
 
 <div id="status"></div>
-<div id="tags"></div>
+
+<!-- Image preview -->
+<img id="preview" />
+
+<!-- AI results -->
+<div id="results"></div>
+
+<!-- Similar places -->
+<div id="gallery"></div>
+
+<!-- Map -->
 <div id="map"></div>
 
 </body>
 </html>
+
