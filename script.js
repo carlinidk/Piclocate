@@ -1,58 +1,79 @@
-const HF_TOKEN = "YOUR_HUGGINGFACE_TOKEN";
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.8.0";
 
-const labels = [
-  "beach", "mountains", "city nightlife", "aesthetic cafe",
-  "historic monument", "nature landscape",
-  "luxury resort", "street photography",
-  "urban aesthetic", "sunset view"
+// Ambience / aesthetic labels
+const LABELS = [
+  "beach",
+  "mountains",
+  "forest nature",
+  "city skyline",
+  "urban nightlife",
+  "aesthetic cafe",
+  "historic monument",
+  "luxury resort",
+  "street photography",
+  "sunset landscape"
 ];
 
-async function analyze() {
-  const file = document.getElementById("imageInput").files[0];
-  if (!file) return alert("Upload an image");
+const statusEl = document.getElementById("status");
+const tagsEl = document.getElementById("tags");
+const analyzeBtn = document.getElementById("analyzeBtn");
 
-  const imageBlob = await file.arrayBuffer();
+let classifier;
 
-  // 1️⃣ CLIP Image → Vibe detection
-  const response = await fetch(
-    "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32",
-    {
-      method: "POST",
-      headers: {"Content-Type": "application/octet-stream"}
-      },
-      body: imageBlob
-    }
+// Load model once
+async function loadModel() {
+  statusEl.textContent = "Loading AI model (first time may take ~30s)...";
+  classifier = await pipeline(
+    "zero-shot-image-classification",
+    "Xenova/clip-vit-base-patch32"
   );
-
-  const result = await response.json();
-
-  // Fake similarity scoring
-  const detected = labels
-    .map(label => ({
-      label,
-      score: Math.random().toFixed(2)
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
-  document.getElementById("tags").innerHTML =
-    `<h3>Detected Ambience</h3>` +
-    detected.map(d => `🌍 ${d.label}`).join("<br>");
-
-  // 2️⃣ Search location
-  searchLocation(detected[0].label);
+  statusEl.textContent = "AI model ready ✅";
 }
 
+loadModel();
+
+analyzeBtn.onclick = async () => {
+  const file = document.getElementById("imageInput").files[0];
+  if (!file) {
+    alert("Upload an image");
+    return;
+  }
+
+  statusEl.textContent = "Analyzing image...";
+  tagsEl.innerHTML = "";
+
+  // Run CLIP zero-shot classification
+  const results = await classifier(file, LABELS);
+
+  // Take top 3
+  const top = results.slice(0, 3);
+
+  tagsEl.innerHTML =
+    "<h3>Detected Ambience</h3>" +
+    top.map(r =>
+      `🌍 ${r.label} (${(r.score * 100).toFixed(1)}%)`
+    ).join("<br>");
+
+  // Use strongest label to search place
+  searchLocation(top[0].label);
+};
+
 async function searchLocation(query) {
+  statusEl.textContent = "Finding similar places...";
+
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
   );
+
   const data = await res.json();
-  if (!data.length) return;
+  if (!data.length) {
+    statusEl.textContent = "No matching locations found";
+    return;
+  }
 
   const place = data[0];
-
   showMap(place.lat, place.lon, place.display_name);
+  statusEl.textContent = "Done ✅";
 }
 
 function showMap(lat, lon, name) {
@@ -61,7 +82,7 @@ function showMap(lat, lon, name) {
   const map = L.map("map").setView([lat, lon], 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap"
+    attribution: "© OpenStreetMap contributors"
   }).addTo(map);
 
   L.marker([lat, lon])
@@ -69,4 +90,3 @@ function showMap(lat, lon, name) {
     .bindPopup(name)
     .openPopup();
 }
-
