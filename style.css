@@ -1,14 +1,31 @@
 body {
   background: #0b0b0b;
   color: white;
-  font-family: system-ui;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
   text-align: center;
+}
+
+h1 {
+  margin-top: 20px;
 }
 
 button, input {
   margin: 10px;
-  padding: 10px;
+  padding: 10px 14px;
   font-size: 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+  background: #1e88e5;
+  color: white;
+}
+
+#status {
+  margin-top: 15px;
+  opacity: 0.8;
 }
 
 #tags {
@@ -17,9 +34,8 @@ button, input {
 }
 
 #map {
-  height: 400px;
+  height: 420px;
   width: 90%;
-  margin: auto;
+  margin: 30px auto;
   border-radius: 12px;
 }
-
